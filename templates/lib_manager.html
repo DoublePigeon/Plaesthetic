@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plaesthetic 音乐库管理器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            /* 白天模式变量 */
+            --light-bg: #FFFFFF;
+            --light-bg-secondary: #F5F0FF;
+            --light-text: #333333;
+            --light-text-secondary: #666666;
+            --light-accent: #E0B0FF;
+            --light-accent-secondary: #C7A1D9;
+            --light-control-bg: #F8F4FC;
+            --light-button-bg: #E8D0F0;
+            --light-sidebar-bg: #FAF6FC;
+            --light-sidebar-button-hover: #F0E0F5;
+            --light-border: #FAF6FC;
+            --light-exit-button-bg: #FFD2D2;
+            /* 黑夜模式变量 */
+            --dark-bg: #121212;
+            --dark-bg-secondary: #1E1A28;
+            --dark-text: #FFFFFF;
+            --dark-text-secondary: #CCCCCC;
+            --dark-accent: #B19CD9;
+            --dark-accent-secondary: #9B8ACD;
+            --dark-control-bg: #252033;
+            --dark-button-bg: #322A45;
+            --dark-sidebar-bg: #1A1521;
+            --dark-sidebar-button-hover: #2A2338;
+            --dark-border: #1A1521;
+            --dark-exit-button-bg: #5A2A2A;
+            /* 通用变量 */
+            --transition: all 0.2s ease;
+            --radius: 12px;
+            --sidebar-width: 80px;
+            --header-height: 80px;
+            --font-main: 'NotoSansSC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+            --button-radius: 12px;
+        }
+
+        /* 主题切换 - 黑夜模式 */
+        [data-theme="dark"] {
+            --bg-color: var(--dark-bg);
+            --bg-secondary: var(--dark-bg-secondary);
+            --text-color: var(--dark-text);
+            --text-secondary: var(--dark-text-secondary);
+            --accent-color: var(--dark-accent);
+            --accent-secondary: var(--dark-accent-secondary);
+            --control-bg: var(--dark-control-bg);
+            --button-bg: var(--dark-button-bg);
+            --sidebar-bg: var(--dark-sidebar-bg);
+            --sidebar-button-hover: var(--dark-sidebar-button-hover);
+            --border-color: var(--dark-border);
+            --exit-button-bg: var(--dark-exit-button-bg);
+            --progress-bg: #2E2640;
+        }
+
+        /* 主题切换 - 白天模式 */
+        [data-theme="light"] {
+            --bg-color: var(--light-bg);
+            --bg-secondary: var(--light-bg-secondary);
+            --text-color: var(--light-text);
+            --text-secondary: var(--text-secondary);
+            --accent-color: var(--light-accent);
+            --accent-secondary: var(--light-accent-secondary);
+            --control-bg: var(--light-control-bg);
+            --button-bg: var(--light-button-bg);
+            --sidebar-bg: var(--light-sidebar-bg);
+            --sidebar-button-hover: var(--light-sidebar-button-hover);
+            --border-color: var(--light-border);
+            --progress-bg: #E8D0F0;
+            --exit-button-bg: var(--light-exit-button-bg);
+        }
+
+        /* 通用样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+            transition: var(--transition);
+            display: flex;
+            font-weight: 500;
+        }
+
+        /* 侧边栏样式 */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px 0;
+            position: relative;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--button-radius);
+            background-color: var(--sidebar-bg);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin: 0 auto;
+            transition: var(--transition);
+        }
+
+        .theme-toggle img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--sidebar-button-hover);
+        }
+
+        .exit-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius);
+            background-color: var(--exit-button-bg);
+            font-size: 0;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            margin-top: auto;
+            margin-bottom: 5px;
+            margin-left: 20px;
+            transition: var(--transition);
+        }
+
+        .exit-btn img {
+            width: 24px;
+            height: 24px;
+            transition: var(--transition);
+        }
+
+        .exit-btn:hover {
+            background-color: var(--sidebar-button-hover);
+        }
+
+        /* 主内容区样式 */
+        .main-content {
+            flex: 1;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 600;
+            background: linear-gradient(to right, var(--accent-color), #8A2BE2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.3rem;
+            cursor: pointer;
+            position: relative;
+            padding: 8px 15px;
+            transition: var(--transition);
+            z-index: 1;
+        }
+
+        .action-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent-color);
+            transition: var(--transition);
+            z-index: -1;
+        }
+
+        .action-btn:hover {
+            color: var(--accent-color);
+        }
+
+        .action-btn:hover::after {
+            width: 100%;
+        }
+
+        .action-section {
+            background-color: var(--control-bg);
+            border-radius: var(--radius);
+            padding: 25px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .action-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* 悬停提示样式 */
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 1000;
+            max-width: 200px;
+            text-align: center;
+            font-weight: 500;
+            font-family: var(--font-main);
+        }
+
+        .tooltip.active {
+            opacity: 1;
+        }
+
+        /* 表单区域样式 */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-color);
+            opacity: 0.85;
+        }
+
+        .form-select, .form-input {
+            width: 100%;
+            padding: 14px;
+            border-radius: var(--button-radius);
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(177, 156, 217, 0.3);
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .icon-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: var(--button-radius);
+            background-color: var(--accent-color);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .icon-btn img {
+            width: 24px;
+            height: 24px;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.05);
+            background-color: var(--accent-secondary);
+        }
+
+        .icon-btn.delete {
+            background-color: var(--sidebar-button-hover);
+        }
+
+        .upload-section {
+            /* 使用主应用中的上传区域样式 */
+            background-color: var(--control-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 25px;
+            text-align: center;
+            border: 2px dashed var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .upload-section:hover {
+            border-color: var(--accent-color);
+            background-color: var(--progress-bg);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: var(--text-color);
+            opacity: 0.85;
+            font-size: 1.1rem;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        /* 加载状态 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(177, 156, 217, 0.3);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        /* SVG的过滤效果 */
+        [data-theme="light"] img, [data-theme="light"] .icon-btn img {
+            filter: none;
+        }
+
+        [data-theme="dark"] img, [data-theme="dark"] .icon-btn img {
+            filter: invert(85%) brightness(1.8);
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div>
+            <button class="theme-toggle" id="themeToggle" data-tooltip="切换白天/黑夜主题">
+                <img src="{{ url_for('static', filename='resources/night.svg') }}" alt="夜晚模式" id="dayIcon" style="display: none;">
+                <img src="{{ url_for('static', filename='resources/day.svg') }}" alt="白天模式" id="nightIcon">
+            </button>
+        </div>
+        <div>
+            <button class="exit-btn" id="exitBtn" data-tooltip="退出并关闭管理器">
+                <img src="{{ url_for('static', filename='resources/deny.svg') }}" alt="退出">
+            </button>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <div class="header">
+            <h1 class="logo">Plaesthetic 音乐库管理器</h1>
+        </div>
+
+        <div class="action-buttons">
+            <button class="action-btn" data-section="edit-section">修改已有歌曲信息</button>
+            <button class="action-btn" data-section="add-section">添加新的歌曲</button>
+            <button class="action-btn" data-section="change-path-section">更改音乐库路径</button>
+        </div>
+
+        <!-- 修改歌曲区域 -->
+        <div id="edit-section" class="action-section">
+            <h2 class="section-title">修改已有歌曲信息</h2>
+            <div class="form-grid">
+                <div>
+                    <div class="form-group">
+                        <label class="form-label">选择歌曲</label>
+                        <select id="songSelect" class="form-select">
+                            <option value="">请选择歌曲...</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label class="form-label">本地/在线类型</label>
+                        <select id="editType" class="form-select">
+                            <option value="local">本地文件</option>
+                            <option value="online">在线链接</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">路径/链接</label>
+                        <input type="text" id="editLink" class="form-input" placeholder="输入文件路径或URL">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">韵律信息</label>
+                        <input type="text" id="editRhythm" class="form-input" placeholder="例如：舒缓、急促、悠扬...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">情绪信息</label>
+                        <input type="text" id="editMood" class="form-input" placeholder="例如：平静、兴奋、忧郁...">
+                    </div>
+                    <div class="button-group">
+                        <button class="icon-btn" id="saveEditBtn" data-tooltip="保存对当前歌曲的修改">
+                            <img src="{{ url_for('static', filename='resources/save.svg') }}" alt="保存">
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="button-group" style="justify-content: center; margin-top: 20px;" data-tooltip="删除选中的歌曲">
+                <button class="icon-btn delete" id="deleteSongBtn">
+                    <img src={{ url_for('static', filename='resources/deny.svg') }} alt="删除" style="">
+                </button>
+            </div>
+        </div>
+
+        <!-- 添加歌曲区域 -->
+        <div id="add-section" class="action-section">
+            <h2 class="section-title">添加新的歌曲</h2>
+            <div class="form-grid">
+                <div>
+                    <div class="form-group">
+                        <label class="form-label">歌曲标题</label>
+                        <input type="text" id="addTitle" class="form-input" placeholder="输入歌曲名称">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">本地/在线类型</label>
+                        <select id="addType" class="form-select">
+                            <option value="local">本地文件</option>
+                            <option value="online">在线链接</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">路径/链接</label>
+                        <input type="text" id="addLink" class="form-input" placeholder="输入文件路径或URL">
+                    </div>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label class="form-label">韵律信息</label>
+                        <input type="text" id="addRhythm" class="form-input" placeholder="例如：舒缓、急促、悠扬...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">情绪信息</label>
+                        <input type="text" id="addMood" class="form-input" placeholder="例如：平静、兴奋、忧郁...">
+                    </div>
+                    <div class="button-group">
+                        <button class="icon-btn" id="saveAddBtn" data-tooltip="保存歌曲">
+                            <img src="{{ url_for('static', filename='resources/save.svg') }}" alt="保存">
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="upload-section" id="uploadSection" data-tooltip="上传歌曲并自动填写部分信息">
+                <div class="upload-icon">
+                    <img src="{{ url_for('static', filename='resources/upload.svg') }}" alt="上传" style="width: 50px; height: 50px;">
+                </div>
+                <div class="upload-text">点击上传本地歌曲文件</div>
+                <div style="font-size: 0.9rem; margin-top: 5px; color: var(--text-color); opacity: 0.6;">
+                    支持 MP3、WAV、FLAC 等音频格式
+                </div>
+            </div>
+        </div>
+
+        <!-- 更改路径区域 -->
+        <div id="change-path-section" class="action-section">
+            <h2 class="section-title">更改音乐库路径</h2>
+            <div class="form-group">
+                <label class="form-label">当前音乐库路径</label>
+                <input type="text" id="currentLibPath" class="form-input" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">新音乐库路径（JSON文件）</label>
+                <input type="text" id="newLibPath" class="form-input" placeholder="输入或选择JSON文件路径">
+            </div>
+            <div class="button-group" style="justify-content: flex-end;">
+                <button class="icon-btn" id="savePathBtn" data-tooltip="保存当前的音乐库路径">
+                    <img src="{{ url_for('static', filename='resources/save.svg') }}" alt="保存">
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 确保tooltip元素存在
+            if (!document.querySelector('.tooltip')) {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                document.body.appendChild(tooltip);
+            }
+
+            // 显示tooltip的函数
+            function showTooltip(element, text) {
+                const tooltip = document.querySelector('.tooltip');
+                tooltip.textContent = text;
+
+                // 获取元素位置
+                const rect = element.getBoundingClientRect();
+
+                // 计算tooltip位置 - 显示在元素上方居中位置
+                let top = rect.top - tooltip.offsetHeight - 10;
+                let left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2;
+
+                // 确保tooltip不会超出屏幕
+                if (left < 10) left = 10;
+                if (left + tooltip.offsetWidth > window.innerWidth - 10) {
+                    left = window.innerWidth - tooltip.offsetWidth - 10;
+                }
+
+                // 如果tooltip顶部超出屏幕，显示在元素下方
+                if (top < 0) {
+                    top = rect.bottom + 10;
+                }
+
+                tooltip.style.left = `${left}px`;
+                tooltip.style.top = `${top}px`;
+                tooltip.classList.add('active');
+            }
+
+            // 隐藏tooltip的函数
+            function hideTooltip() {
+                const tooltip = document.querySelector('.tooltip');
+                tooltip.classList.remove('active');
+            }
+
+            // 初始化所有带data-tooltip属性的元素
+            function initTooltips() {
+                document.querySelectorAll('[data-tooltip]').forEach(element => {
+                    element.addEventListener('mouseenter', function () {
+                        const tooltipText = this.getAttribute('data-tooltip');
+                        if (tooltipText) {
+                            showTooltip(this, tooltipText);
+                        }
+                    });
+
+                    element.addEventListener('mouseleave', hideTooltip);
+                });
+            }
+            // 初始化主题
+            const savedTheme = localStorage.getItem('plaesthetic_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            // 更新主题图标
+            const themeToggle = document.getElementById('themeToggle');
+            const dayIcon = document.getElementById('dayIcon');
+            const nightIcon = document.getElementById('nightIcon');
+            
+            if (savedTheme === 'dark') {
+                dayIcon.style.display = 'block';
+                nightIcon.style.display = 'none';
+            } else {
+                dayIcon.style.display = 'none';
+                nightIcon.style.display = 'block';
+            }
+            
+            // 主题切换功能
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('plaesthetic_theme', newTheme);
+                
+                // 切换图标
+                if (newTheme === 'dark') {
+                    dayIcon.style.display = 'block';
+                    nightIcon.style.display = 'none';
+                } else {
+                    dayIcon.style.display = 'none';
+                    nightIcon.style.display = 'block';
+                }
+            });
+            
+            // 退出功能
+            document.getElementById('exitBtn').addEventListener('click', function() {
+                if (confirm('确认要关闭音乐库管理器吗？')) {
+                    fetch('/shutdown', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(() => {
+                        window.close();
+                        // 对于不支持window.close的浏览器，提供提示
+                        alert('管理器已关闭，请手动关闭此窗口');
+                    })
+                    .catch(error => {
+                        console.error('关闭请求失败:', error);
+                        alert('关闭请求失败，请手动关闭此窗口');
+                    });
+                }
+            });
+            
+            // 功能区域切换
+            document.querySelectorAll('.action-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    // 隐藏所有区域
+                    document.querySelectorAll('.action-section').forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    
+                    // 显示目标区域
+                    const targetSection = document.getElementById(this.getAttribute('data-section'));
+                    targetSection.classList.add('active');
+                    
+                    // 加载当前音乐库路径
+                    if (this.getAttribute('data-section') === 'change-path-section') {
+                        loadCurrentLibPath();
+                    }
+                    
+                    // 加载歌曲列表
+                    if (this.getAttribute('data-section') === 'edit-section') {
+                        loadMusicLibrary();
+                    }
+                });
+            });
+            
+            // 加载当前音乐库路径
+            function loadCurrentLibPath() {
+                fetch('/api/lib_path')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('currentLibPath').value = data.lib_path;
+                    })
+                    .catch(error => {
+                        console.error('获取音乐库路径失败:', error);
+                        document.getElementById('currentLibPath').value = '获取路径失败';
+                    });
+            }
+            
+            // 加载音乐库列表
+            function loadMusicLibrary() {
+                const select = document.getElementById('songSelect');
+                select.innerHTML = '<option value="">加载中...</option>';
+                
+                fetch('/api/music_library')
+                    .then(response => response.json())
+                    .then(data => {
+                        select.innerHTML = '<option value="">请选择歌曲...</option>';
+                        
+                        if (data.error) {
+                            select.innerHTML += `<option value="" disabled>错误: ${data.error}</option>`;
+                            return;
+                        }
+                        
+                        if (data.music_library.length === 0) {
+                            select.innerHTML += '<option value="" disabled>没有找到歌曲</option>';
+                            return;
+                        }
+                        
+                        data.music_library.forEach(title => {
+                            const option = document.createElement('option');
+                            option.value = title;
+                            option.textContent = title;
+                            select.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('获取音乐库失败:', error);
+                        select.innerHTML = '<option value="" disabled>获取歌曲列表失败</option>';
+                    });
+            }
+            
+            // 监听歌曲选择变化
+            document.getElementById('songSelect').addEventListener('change', function() {
+                const selectedTitle = this.value;
+                if (!selectedTitle) return;
+                
+                // 显示加载状态
+                const inputs = document.querySelectorAll('#edit-section .form-input, #edit-section .form-select');
+                inputs.forEach(input => {
+                    input.disabled = true;
+                    input.style.opacity = '0.7';
+                });
+                
+                // 获取歌曲详情
+                fetch('/api/music_info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title: selectedTitle })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success === false) {
+                        alert(`错误: ${data.error}`);
+                        return;
+                    }
+                    
+                    // 填充表单
+                    document.getElementById('editType').value = data.type;
+                    document.getElementById('editLink').value = data.link;
+                    document.getElementById('editRhythm').value = data.features.rhythm;
+                    document.getElementById('editMood').value = data.features.mood;
+                    
+                    // 启用输入框
+                    setTimeout(() => {
+                        inputs.forEach(input => {
+                            input.disabled = false;
+                            input.style.opacity = '1';
+                        });
+                    }, 300);
+                })
+                .catch(error => {
+                    console.error('获取歌曲信息失败:', error);
+                    alert('获取歌曲信息失败，请重试');
+                });
+            });
+            
+            // 保存修改
+            document.getElementById('saveEditBtn').addEventListener('click', function() {
+                const title = document.getElementById('songSelect').value;
+                if (!title) {
+                    alert('请先选择一首歌曲');
+                    return;
+                }
+                
+                const data = {
+                    target_title: title,
+                    new_title: title, // 暂不支持修改标题
+                    new_type: document.getElementById('editType').value,
+                    new_link: document.getElementById('editLink').value,
+                    new_rhythm: document.getElementById('editRhythm').value,
+                    new_mood: document.getElementById('editMood').value
+                };
+                
+                // 显示保存按钮加载状态
+                this.disabled = true;
+                const originalHTML = this.innerHTML;
+                this.innerHTML = `<div class="spinner"></div>`;
+                
+                fetch('/api/edit_song', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert('歌曲信息已成功更新！');
+                        // 重新加载音乐库
+                        loadMusicLibrary();
+                    } else {
+                        alert(`更新失败: ${result.error}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('保存修改失败:', error);
+                    alert('保存修改时出错，请检查控制台');
+                })
+                .finally(() => {
+                    this.disabled = false;
+                    this.innerHTML = originalHTML;
+                });
+            });
+            
+            // 删除歌曲
+            document.getElementById('deleteSongBtn').addEventListener('click', function() {
+                const title = document.getElementById('songSelect').value;
+                if (!title) {
+                    alert('请先选择一首歌曲');
+                    return;
+                }
+                
+                if (!confirm(`确定要删除 "${title}" 吗？`)) {
+                    return;
+                }
+                
+                // 显示删除按钮加载状态
+                this.disabled = true;
+                const originalHTML = this.innerHTML;
+                this.innerHTML = `<div class="spinner" style="width: 20px; height: 20px;"></div>`;
+                
+                fetch('/api/delete_song', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title: title })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert('歌曲已成功删除！');
+                        // 重置表单
+                        document.getElementById('songSelect').value = '';
+                        document.getElementById('editType').value = 'local';
+                        document.getElementById('editLink').value = '';
+                        document.getElementById('editRhythm').value = '';
+                        document.getElementById('editMood').value = '';
+                        
+                        // 重新加载音乐库
+                        loadMusicLibrary();
+                    } else {
+                        alert(`删除失败: ${result.error}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('删除歌曲失败:', error);
+                    alert('删除歌曲时出错，请检查控制台');
+                })
+                .finally(() => {
+                    this.disabled = false;
+                    this.innerHTML = originalHTML;
+                });
+            });
+            
+            // 保存新路径
+            document.getElementById('savePathBtn').addEventListener('click', function() {
+                const newPath = document.getElementById('newLibPath').value.trim();
+                if (!newPath) {
+                    alert('请输入新的音乐库路径');
+                    return;
+                }
+                
+                // 显示保存按钮加载状态
+                this.disabled = true;
+                const originalHTML = this.innerHTML;
+                this.innerHTML = `<div class="spinner"></div>`;
+                
+                fetch('/api/set_lib_path', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ path: newPath })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert('音乐库路径已更新！');
+                        // 更新当前路径显示
+                        document.getElementById('currentLibPath').value = newPath;
+                        document.getElementById('newLibPath').value = '';
+                    } else {
+                        alert(`更新失败: ${result.error}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('更新路径失败:', error);
+                    alert('更新路径时出错，请检查控制台');
+                })
+                .finally(() => {
+                    this.disabled = false;
+                    this.innerHTML = originalHTML;
+                });
+            });
+            
+            // 文件上传功能
+            document.getElementById('uploadSection').addEventListener('click', function () {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'audio/*';
+
+                // 保存当前的上传文本以便恢复
+                const uploadSection = this;
+                const originalText = uploadSection.querySelector('.upload-text').innerHTML;
+
+                fileInput.onchange = function (e) {
+                    if (this.files && this.files[0]) {
+                        const file = this.files[0];
+
+                        // 创建 FormData 对象
+                        const formData = new FormData();
+                        formData.append('file', file);
+
+                        // 临时显示上传状态
+                        uploadSection.querySelector('.upload-text').innerHTML = '正在上传...';
+
+                        // 发送上传请求
+                        fetch('/api/upload_song', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`上传失败: ${response.status} ${response.statusText}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                // 使用API返回的绝对路径
+                                const absolutePath = data.file_path;
+                                const fileName = data.filename;
+
+                                // 填充到添加区域
+                                document.getElementById('addTitle').value = fileName.replace(/\.[^/.]+$/, "");
+                                document.getElementById('addLink').value = absolutePath;
+
+                                // 显示成功消息
+                                console.log(`文件已成功上传至: ${absolutePath}`);
+
+                                // 临时显示成功状态
+                                uploadSection.querySelector('.upload-text').innerHTML = '上传成功!';
+
+                                // 1秒后恢复原始状态
+                                setTimeout(() => {
+                                    uploadSection.querySelector('.upload-text').innerHTML = originalText;
+                                    uploadIcon.style.transform = '';
+                                }, 1000);
+
+                                alert(`文件已上传至:\n${absolutePath}\n\n已自动填入表单`);
+                            } else {
+                                throw new Error(data.error || '文件上传处理失败');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('上传错误:', error);
+
+                            // 显示错误信息
+                            uploadSection.querySelector('.upload-text').innerHTML = '上传失败!';
+                            uploadSection.classList.add('upload-error');
+
+                            // 2秒后恢复原始状态
+                            setTimeout(() => {
+                                uploadSection.querySelector('.upload-text').innerHTML = originalText;
+                                uploadSection.classList.remove('upload-error');
+                                uploadIcon.style.transform = '';
+                            }, 2000);
+
+                            alert(`文件上传失败: ${error.message}\n\n请检查服务器是否正常运行`);
+                        });
+                    }
+                };
+
+                fileInput.click();
+            });
+            
+            // 保存新歌曲
+            document.getElementById('saveAddBtn').addEventListener('click', function() {
+                const title = document.getElementById('addTitle').value.trim();
+                const type = document.getElementById('addType').value;
+                const link = document.getElementById('addLink').value.trim();
+                const rhythm = document.getElementById('addRhythm').value.trim();
+                const mood = document.getElementById('addMood').value.trim();
+                
+                if (!title) {
+                    alert('歌曲标题不能为空');
+                    return;
+                }
+                
+                if (!link) {
+                    alert('路径/链接不能为空');
+                    return;
+                }
+                
+                const data = {
+                    title: title,
+                    type: type,
+                    link: link,
+                    rhythm: rhythm,
+                    mood: mood
+                };
+                
+                // 显示保存按钮加载状态
+                this.disabled = true;
+                const originalHTML = this.innerHTML;
+                this.innerHTML = `<div class="spinner"></div>`;
+                
+                fetch('/api/add_song', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert('新歌曲添加成功！');
+                        // 重置表单
+                        document.getElementById('addTitle').value = '';
+                        document.getElementById('addType').value = 'local';
+                        document.getElementById('addLink').value = '';
+                        document.getElementById('addRhythm').value = '';
+                        document.getElementById('addMood').value = '';
+                    } else {
+                        alert(`添加失败: ${result.error}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('添加歌曲失败:', error);
+                    alert('添加歌曲时出错，请检查控制台');
+                })
+                .finally(() => {
+                    this.disabled = false;
+                    this.innerHTML = originalHTML;
+                });
+            });
+            
+            // 设置默认激活区域
+            document.getElementById('edit-section').classList.add('active');
+            loadMusicLibrary();
+            loadCurrentLibPath();
+
+            // 初始化tooltip
+            initTooltips();
+        });
+    </script>
+</body>
+</html>

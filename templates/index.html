@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plaesthetic</title>
+    
+    <!-- 本地字体加载 -->
+    <style>
+        @font-face {
+            font-family: 'NotoSansSC';
+            src: url('{{ url_for('static', filename='resources/fonts/NotoSansSC-SemiBold.ttf') }}') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* 白天模式样式变量 */
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F5F0FF;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --accent-primary: #E0B0FF; /* 淡紫红色 */
+            --accent-secondary: #C7A1D9;
+            --control-bg: #F8F4FC;
+            --button-bg: #E8D0F0;
+            --progress-bg: #E8D0F0;
+            --progress-fill: #C7A1D9;
+            --sidebar-bg: #FAF6FC;
+            --sidebar-button-hover: #F0E0F5;
+            --upload-area-bg: #F8F4FC;
+            --upload-border: #E0B0FF;
+            --exit-button-bg: #FFD2D2;
+            --exit-button-text: #B00020;
+            --volume-thumb: #D9B0E0;
+            --volume-track: #F0E0F5;
+        }
+        
+        [data-theme="dark"] {
+            /* 黑夜模式样式变量 */
+            --bg-primary: #121212;
+            --bg-secondary: #1E1A28;
+            --text-primary: #FFFFFF;
+            --text-secondary: #CCCCCC;
+            --accent-primary: #B19CD9; /* 紫色 */
+            --accent-secondary: #9B8ACD;
+            --control-bg: #252033;
+            --button-bg: #322A45;
+            --progress-bg: #2E2640;
+            --progress-fill: #B19CD9;
+            --sidebar-bg: #1A1521;
+            --sidebar-button-hover: #2A2338;
+            --upload-area-bg: #252033;
+            --upload-border: #B19CD9;
+            --exit-button-bg: #5A2A2A;
+            --exit-button-text: #FFB6B6;
+            --volume-thumb: #A080C0;
+            --volume-track: #2A2338;
+        }
+        
+        body {
+            font-family: 'NotoSansSC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            transition: background-color 0.3s ease;
+        }
+        
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 80px; /* 固定宽度，不再伸缩 */
+            height: 100%;
+            background-color: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            z-index: 100;
+            position: fixed; /* 添加固定定位 */
+            left: 0;
+            top: 0;
+        }
+
+        .sidebar-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: transparent;
+            position: relative;
+        }
+        
+        .sidebar-icon:hover {
+            background-color: var(--sidebar-button-hover);
+        }
+        
+        .sidebar-icon img {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .sidebar-text {
+            position: absolute;
+            left: 60px;
+            background-color: var(--sidebar-bg);
+            padding: 8px 12px;
+            border-radius: 8px;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+        
+        .sidebar:hover .sidebar-text {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .status-icon {
+            position: absolute;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .status-icon.active {
+            opacity: 1;
+        }
+
+        .exit-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background-color: var(--exit-button-bg);
+            color: var(--exit-button-text);
+            cursor: pointer;
+            margin-top: auto;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            font-size: 0;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .exit-button:hover {
+            background-color: var(--sidebar-button-hover);
+        }
+
+        .exit-button img {
+            width: 20px;
+            height: 20px;
+            transition: all 0.2s;
+        }
+        
+        /* 主内容区域样式 */
+        .main-content {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            overflow-y: auto;
+            margin-left: 80px;
+        }
+        
+        .title {
+            font-size: 48px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--accent-primary), #8A2BE2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+        
+        .upload-area {
+            width: 400px;
+            height: 400px;
+            border: 2px dashed var(--upload-border);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--upload-area-bg);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .upload-area:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        [data-theme="dark"] .upload-area:hover {
+            box-shadow: 0 8px 20px rgba(177, 156, 217, 0.2);
+        }
+        
+        .upload-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            font-size: 22px;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 0 20px;
+            line-height: 1.4;
+        }
+        
+        .upload-area.dragover {
+            border-color: var(--accent-primary);
+            background-color: var(--progress-bg);
+        }
+
+        .library-path-container {
+            width: 400px;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .library-path-input-wrapper {
+            position: relative;
+        }
+
+        .library-path-input {
+            width: 100%;
+            padding: 12px 50px 12px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--upload-border);
+            background-color: var(--upload-area-bg);
+            color: var(--text-primary);
+            font-family: 'NotoSansSC', sans-serif;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            height: 44px;
+        }
+
+        .library-path-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(177, 156, 217, 0.3);
+        }
+
+        .save-path-btn {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .save-path-btn:hover {
+            background-color: var(--sidebar-button-hover);
+        }
+
+        .save-path-btn img {
+            width: 18px;
+            height: 18px;
+        }
+
+        .path-status {
+            margin-top: 8px;
+            font-size: 14px;
+            height: 20px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            color: var(--accent-primary);
+        }
+
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(177, 156, 217, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--accent-primary);
+            animation: spin 1s ease-in-out infinite;
+            -webkit-animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @-webkit-keyframes spin {
+            to {
+                -webkit-transform: rotate(360deg);
+            }
+        }
+
+        /* 底部栏样式 */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 80px;
+            right: 0;
+            height: 90px;
+            background-color: var(--control-bg);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 99;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 悬停提示样式 */
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 1000;
+            max-width: 200px;
+            text-align: center;
+            font-weight: 500;
+            font-family: 'NotoSansSC', sans-serif;
+        }
+
+        .tooltip.active {
+            opacity: 1;
+        }
+
+        [data-theme="dark"] .bottom-bar {
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .song-info {
+            flex: 1;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .control-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background-color: var(--button-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        
+        .control-button:hover {
+            transform: scale(1.05);
+            background-color: var(--accent-secondary);
+        }
+        
+        .control-button img {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .progress-container {
+            width: 400px;
+            height: 6px;
+            background-color: var(--progress-bg);
+            border-radius: 3px;
+            margin: 0 10px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 150px;
+        }
+        
+        .volume-icon {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .volume-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--volume-track);
+            outline: none;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--volume-thumb);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: var(--accent-primary);
+        }
+
+        /* 黑白模式切换时的图标逻辑 */
+        [data-theme="light"] .sidebar-icon img,
+        [data-theme="light"] .control-button img,
+        [data-theme="light"] .volume-icon,
+        [data-theme="light"] .save-path-btn img,
+        [data-theme="light"] .upload-icon,
+        [data-theme="light"] .exit-button img {
+            filter: none;
+        }
+
+        [data-theme="dark"] .sidebar-icon img,
+        [data-theme="dark"] .control-button img,
+        [data-theme="dark"] .volume-icon,
+        [data-theme="dark"] .save-path-btn img,
+        [data-theme="dark"] .upload-icon,
+        [data-theme="dark"] .exit-button img {
+           filter: invert(85%) brightness(1.8);
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .upload-area {
+                width: 300px;
+                height: 300px;
+            }
+            
+            .bottom-bar {
+                padding: 0 15px;
+            }
+            
+            .progress-container {
+                width: 200px;
+            }
+
+            .volume-container {
+                library-input-trigger width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div class="sidebar-icon" id="theme-toggle" data-tooltip="切换白天/黑夜主题">
+            <img src="{{ url_for('static', filename='resources/day.svg') }}" alt="切换主题">
+        </div>
+
+        <div class="sidebar-icon" id="edit-library" data-tooltip="打开音乐库管理器">
+            <img src="{{ url_for('static', filename='resources/edit.svg') }}" alt="调整库">
+        </div>
+
+        <button class="exit-button" id="exit-button" data-tooltip="退出并关闭程序">
+            <img src="{{ url_for('static', filename='resources/deny.svg') }}" alt="退出">
+        </button>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <h1 class="title">Plaesthetic</h1>
+        <p class="subtitle">"Life Imitating Art"</p>
+
+        <div class="upload-area" id="upload-area">
+            <img src="{{ url_for('static', filename='resources/upload.svg') }}" alt="上传图标" class="upload-icon">
+            <p class="upload-text">拖拽图片到这里<br>或点击选择图片</p>
+            <input type="file" id="file-input" accept="image/*" style="display: none;">
+        </div>
+        <div class="library-path-container">
+            <div class="library-path-input-wrapper">
+                <input type="text" class="library-path-input" placeholder="输入音乐库JSON路径..." value="输入音乐库JSON路径 例:../song_list.json">
+                <button class="save-path-btn">
+                    <img src="{{ url_for('static', filename='resources/save.svg') }}" alt="保存">
+                </button>
+            </div>
+            <div class="path-status">音乐库路径已保存</div>
+        </div>
+    </div>
+
+    <!-- 底部控制栏 -->
+    <div class="bottom-bar">
+        <div class="song-info" id="song-info">未播放任何歌曲</div>
+
+        <div class="controls">
+            <div class="control-button" id="play-pause-btn" data-tooltip="播放/暂停音乐">
+                <img src="{{ url_for('static', filename='resources/play.svg') }}" alt="播放" id="play-pause-icon">
+            </div>
+            <div class="control-button" id="skip-btn" data-tooltip="跳过当前歌曲">
+                <img src="{{ url_for('static', filename='resources/skip.svg') }}" alt="跳过">
+            </div>
+
+            <div class="progress-container" id="progress-container" data-tooltip="进度条(W.I.P.)">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+
+            <div class="volume-container">
+                <img src="{{ url_for('static', filename='resources/volume.svg') }}" class="volume-icon" alt="音量" data-tooltip="调节音量">
+                <input type="range" min="0" max="100" value="50" class="volume-slider" id="volume-slider">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!document.querySelector('.tooltip')) {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                document.body.appendChild(tooltip);
+            }
+
+            // 显示tooltip的函数
+            function showTooltip(element, text) {
+                const tooltip = document.querySelector('.tooltip');
+                tooltip.textContent = text;
+
+                // 获取元素位置
+                const rect = element.getBoundingClientRect();
+
+                // 计算tooltip位置 - 显示在元素上方居中位置
+                let top = rect.top - tooltip.offsetHeight - 10;
+                let left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2;
+
+                // 确保tooltip不会超出屏幕
+                if (left < 10) left = 10;
+                if (left + tooltip.offsetWidth > window.innerWidth - 10) {
+                    left = window.innerWidth - tooltip.offsetWidth - 10;
+                }
+
+                // 如果tooltip顶部超出屏幕，显示在元素下方
+                if (top < 0) {
+                    top = rect.bottom + 10;
+                }
+
+                tooltip.style.left = `${left}px`;
+                tooltip.style.top = `${top}px`;
+                tooltip.classList.add('active');
+            }
+
+            // 隐藏tooltip的函数
+            function hideTooltip() {
+                const tooltip = document.querySelector('.tooltip');
+                tooltip.classList.remove('active');
+            }
+
+            // 为所有有data-tooltip属性的元素添加悬停事件
+            document.querySelectorAll('[data-tooltip]').forEach(element => {
+                element.addEventListener('mouseenter', function () {
+                    const tooltipText = this.getAttribute('data-tooltip');
+                    if (tooltipText) {
+                        showTooltip(this, tooltipText);
+                    }
+                });
+
+                element.addEventListener('mouseleave', hideTooltip);
+            });
+
+            // DOM 元素
+            const themeToggle = document.getElementById('theme-toggle');
+            const editLibrary = document.getElementById('edit-library');
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const playPauseIcon = document.getElementById('play-pause-icon');
+            const skipBtn = document.getElementById('skip-btn');
+            const progressBar = document.getElementById('progress-bar');
+            const progressContainer = document.getElementById('progress-container');
+            const songInfo = document.getElementById('song-info');
+            const exitButton = document.getElementById('exit-button');
+            const volumeSlider = document.getElementById('volume-slider');
+            const libraryPathInput = document.querySelector('.library-path-input');
+            const savePathBtn = document.querySelector('.save-path-btn');
+            const pathStatus = document.querySelector('.path-status');
+
+            // 当前状态
+            let isPlaying = false;
+            let currentSong = null;
+            let isDragging = false;
+            let progressInterval = null;
+
+            // 主题切换
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.body.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.body.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+
+                // 更新图标
+                const iconSrc = newTheme === 'dark' ?
+                    "{{ url_for('static', filename='resources/night.svg') }}" :
+                    "{{ url_for('static', filename='resources/day.svg') }}";
+                themeToggle.querySelector('img').src = iconSrc;
+            });
+
+            // 同步切换图标
+            if (savedTheme === 'dark') {
+                themeToggle.querySelector('img').src = "{{ url_for('static', filename='resources/night.svg') }}";
+            }
+
+            // 编辑音乐库 - 打开管理界面
+            editLibrary.addEventListener('click', () => {
+                // 首先尝试启动管理器
+                fetch('/start_lib_manager', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                window.open('http://localhost:5001', '_blank')
+                .catch(error => {
+                    console.error('启动音乐库管理器失败:', error);
+                    alert('无法启动音乐库管理器');
+                });
+            });
+
+            function showStatusMessage(success) {
+                confirmIcon.classList.toggle('active', success);
+                denyIcon.classList.toggle('active', !success);
+                setTimeout(() => {
+                    confirmIcon.classList.remove('active');
+                    denyIcon.classList.remove('active');
+                }, 2000);
+            }
+
+            // 上传区域事件
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                uploadArea.classList.add('dragover');
+            }
+
+            function unhighlight() {
+                uploadArea.classList.remove('dragover');
+            }
+
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', handleFileSelect);
+
+            uploadArea.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const file = dt.files[0];
+                handleFileUpload(file);
+            });
+
+            // 保存音乐库路径
+            savePathBtn.addEventListener('click', () => {
+                const newPath = libraryPathInput.value;
+                fetch('/api/set_music_library', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ path: newPath })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 显示成功消息
+                        pathStatus.textContent = "音乐库路径保存成功";
+                        pathStatus.style.opacity = "1";
+
+                        // 2秒后淡出
+                        setTimeout(() => {
+                            pathStatus.style.opacity = "0";
+                        }, 2000);
+
+                        // 保存到localStorage
+                        localStorage.setItem('musicLibraryPath', newPath);
+                    } else {
+                        // 显示错误消息
+                        pathStatus.textContent = data.error || "保存失败，请检查路径";
+                        pathStatus.style.color = "#FF6B6B";
+                        pathStatus.style.opacity = "1";
+
+                        setTimeout(() => {
+                            pathStatus.style.opacity = "0";
+                            // 恢复默认颜色
+                            setTimeout(() => {
+                                pathStatus.style.color = "var(--accent-primary)";
+                            }, 300);
+                        }, 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error('保存音乐库路径失败:', error);
+                    pathStatus.textContent = "连接服务器失败";
+                    pathStatus.style.color = "#FF6B6B";
+                    pathStatus.style.opacity = "1";
+
+                    setTimeout(() => {
+                        pathStatus.style.opacity = "0";
+                        setTimeout(() => {
+                            pathStatus.style.color = "var(--accent-primary)";
+                        }, 300);
+                    }, 2000);
+                });
+            });
+
+            // 页面加载时，设置保存的路径
+            document.addEventListener('DOMContentLoaded', () => {
+                const savedLibraryPath = localStorage.getItem('musicLibraryPath');
+                if (savedLibraryPath) {
+                    libraryPathInput.value = savedLibraryPath;
+                }
+            });
+
+            // 处理文件选择
+            function handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    handleFileUpload(file);
+                }
+            }
+
+            //上传区域的事件监听
+            function setupUploadEvents() {
+                const uploadArea = document.getElementById('upload-area');
+                if (!uploadArea) return;
+
+                // 获取或创建文件输入元素
+                let fileInput = uploadArea.querySelector('#file-input');
+                if (!fileInput) {
+                    fileInput = document.createElement('input');
+                    fileInput.id = 'file-input';
+                    fileInput.type = 'file';
+                    fileInput.accept = 'image/*';
+                    fileInput.style.display = 'none';
+                    uploadArea.appendChild(fileInput);
+                }
+
+                // 移除所有现有事件监听器 (安全清除)
+                const newUploadArea = uploadArea.cloneNode(true);
+                uploadArea.parentNode.replaceChild(newUploadArea, uploadArea);
+
+                // 更新全局引用
+                window.uploadArea = newUploadArea;
+
+                // 重新获取元素
+                const newFileInput = newUploadArea.querySelector('#file-input');
+
+                // 重新绑定上传区域点击事件
+                newUploadArea.addEventListener('click', () => {
+                    newFileInput.click();
+                });
+
+                // 文件选择变化事件
+                newFileInput.addEventListener('change', handleFileSelect);
+
+                // 拖拽事件处理
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    newUploadArea.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation(); // 修复这里: 从 stopPropagation() 改为 e.stopPropagation()
+                        newUploadArea.classList.add('dragover');
+                    });
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    newUploadArea.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation(); // 修复这里: 从 stopPropagation() 改为 e.stopPropagation()
+
+                        if (eventName === 'drop') {
+                            // 获取拖放文件
+                            const dt = e.dataTransfer;
+                            const file = dt.files[0] ||
+                                (dt.items && dt.items[0] && dt.items[0].getAsFile ? dt.items[0].getAsFile() : null);
+
+                            if (file) handleFileUpload(file);
+                        }
+
+                        if (newUploadArea.classList.contains('dragover')) {
+                            newUploadArea.classList.remove('dragover');
+                        }
+                    });
+                });
+            }
+
+            // 重置上传区域的统一函数
+            function resetUploadArea(text, icon) {
+                const uploadArea = document.getElementById('upload-area');
+                if (!uploadArea) return;
+
+                // 保留当前的dragover状态
+                const wasDragover = uploadArea.classList.contains('dragover');
+
+                // 重置内容
+                const ICON_PATH = "/static/resources/";
+                uploadArea.innerHTML = `
+                    <img src="${ICON_PATH}${icon}" class="upload-icon">
+                    <p class="upload-text">${text}</p>
+                `;
+
+                // 恢复dragover状态
+                if (wasDragover) {
+                    uploadArea.classList.add('dragover');
+                }
+
+                // 重新设置事件监听器
+                setupUploadEvents();
+            }
+
+            // 处理文件上传
+            function handleFileUpload(file) {
+                // 验证文件类型
+                if (!file || !file.type.match('image.*')) {
+                    resetUploadArea(`仅支持图片文件<br>请重新选择`, 'upload.svg');
+                    return;
+                }
+
+                // 直接展示加载状态（关键简化：已知loading.svg存在，无需检测）
+                uploadArea.innerHTML = `
+                    <img src="{{ url_for('static', filename='resources/loading.svg') }}" class="upload-icon">
+                    <p class="upload-text">正在准备合适的音乐</p>
+                `;
+
+                // 开始处理文件
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const formData = new FormData();
+                    formData.append('image', file);
+
+                    fetch('/api/analyse', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => {
+                                throw new Error(err.error || '服务器错误');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.error) {
+                            throw new Error(data.error);
+                        }
+
+                        currentSong = data.recommended_song;
+                        updateSongInfo();
+            
+                        // 成功后短暂保持加载状态以提供视觉反馈
+                        setTimeout(() => {
+                            resetUploadArea(`拖拽图片到这里<br>或点击选择图片`, 'upload.svg');
+                            startProgressUpdates();
+                        }, 800);
+                    })
+                    .catch(error => {
+                        console.error('处理图片失败:', error);
+            
+                        // 短暂显示错误信息
+                        uploadArea.innerHTML = `
+                            <img src="{{ url_for('static', filename='resources/upload.svg') }}" class="upload-icon">
+                            p class="upload-text">处理失败: ${error.message}<br>请重试</p>
+                        `;
+            
+                        // 3秒后恢复初始状态
+                        setTimeout(() => {
+                            resetUploadArea(`拖拽图片到这里<br>或点击选择图片`, 'upload.svg');
+                        }, 3000);
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+
+            // 更新歌曲信息显示
+            function updateSongInfo() {
+                if (currentSong) {
+                    songInfo.textContent = `${currentSong.title}`;
+                } else {
+                    songInfo.textContent = '未播放任何歌曲';
+                }
+            }
+
+            // 启动进度更新
+            function startProgressUpdates() {
+                clearInterval(progressInterval);
+
+                progressInterval = setInterval(() => {
+                    fetch('/api/progress')
+                        .then(response => response.json())
+                        .then(data => {
+                            isPlaying = data.is_playing;
+                            progressBar.style.width = `${data.progress}%`;
+
+                            // 更新播放/暂停图标
+                            const iconPath = isPlaying ?
+                                "{{ url_for('static', filename='resources/pause.svg') }}" :
+                                "{{ url_for('static', filename='resources/play.svg') }}";
+                            playPauseIcon.src = iconPath;
+                        })
+                        .catch(error => {
+                            console.error('获取进度失败:', error);
+                            clearInterval(progressInterval);
+                        });
+                }, 1000);
+            }
+
+            // 播放/暂停控制
+            playPauseBtn.addEventListener('click', () => {
+                const command = isPlaying ? 'pause' : 'resume';
+                fetch('/api/control', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ command: command })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    isPlaying = data.is_playing;
+                    // 图标将在下次进度更新时自动更新
+                });
+            });
+
+            // 跳过歌曲
+            skipBtn.addEventListener('click', () => {
+                fetch('/api/control', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ command: 'skip' })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    currentSong = data.current_song;
+                    updateSongInfo();
+                    progressBar.style.width = '0%';
+                });
+            });
+
+            // 进度条点击
+            progressContainer.addEventListener('click', (e) => {
+                const rect = progressContainer.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const width = rect.width;
+                const percentage = (clickX / width) * 100;
+
+                fetch('/api/control', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        command: 'set_progress',
+                        percentage: percentage
+                    })
+                });
+            });
+
+            // 音量控制
+            volumeSlider.addEventListener('input', () => {
+                fetch('/api/volume', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        volume: volumeSlider.value
+                    })
+                });
+            });
+
+            // 退出应用
+            exitButton.addEventListener('click', () => {
+                if (confirm('确定要退出程序吗？')) {
+                    fetch('/shutdown', {
+                        method: 'POST'
+                    })
+                    .catch(error => {
+                        console.error('关闭服务器失败:', error);
+                        // 即使请求失败，也关闭页面
+                        window.close();
+                    });
+                }
+            });
+
+            // 从本地存储恢复音量
+            const savedVolume = localStorage.getItem('volume');
+            if (savedVolume) {
+                volumeSlider.value = savedVolume;
+                // 发送初始音量设置
+                fetch('/api/volume', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ volume: savedVolume })
+                });
+            }
+
+            // 保存音量到本地存储
+            volumeSlider.addEventListener('change', () => {
+                localStorage.setItem('volume', volumeSlider.value);
+            });
+
+            // 初始化
+            updateSongInfo();
+            startProgressUpdates();
+            setupUploadEvents();
+
+            // 从本地存储恢复音乐库路径
+            const savedLibraryPath = localStorage.getItem('musicLibraryPath');
+            if (savedLibraryPath) {
+                libraryInput.value = savedLibraryPath;
+            }
+        });
+    </script>
+</body>
+</html>
